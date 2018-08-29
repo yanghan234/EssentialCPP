@@ -1,6 +1,6 @@
 /* 
  * Han Yang, Aug-29-2018
- * static memory
+ * local static object
  * As an example, we compute first several elements in Fibonacci sequence.
  */
 #include <iostream>
@@ -18,7 +18,7 @@ int main()
 
 void fib_seq(unsigned size)
 {
-    static vector<int> FibArr;
+    static vector<int> FibArr;      // FibArr is the local static object
     if (size < FibArr.size()){
         cout << "Already calculated!" << endl;
     }else{
