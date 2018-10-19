@@ -11,8 +11,9 @@ void output_results(vector<int> a, vector<int> b);
 int main()
 {
     const int size = 8;
-    vector<int> arr(size),arr0(size),arr1(size),arr2(size);
-    arr = {1,3,2,4,5,7,6,8};
+    int a[size] = {1,3,2,4,5,7,6,8};
+    vector<int> arr(a,a+size);
+    vector<int> arr0(size),arr1(size),arr2(size);
 
     arr0 = sort(arr,0);
     output_results(arr,arr0);
