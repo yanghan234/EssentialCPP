@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <exception>
 using namespace std;
 
 template < typename valType >
@@ -22,6 +23,8 @@ class Node
         Node<valType>* left() const { return _left; };
         Node<valType>* right() const { return _right; };
 
+        static Node<valType>* removeElem( const valType &elem, Node<valType> *sub );
+
     private:
         valType _val;
         unsigned _cnt;
@@ -37,8 +40,9 @@ class BinaryTree
         Node<valType>* root() const { return _root; };
 
         void insert( const valType &elem );
-        bool remove( const valType &elem );
+        void remove( const valType &elem );
         bool search( const valType &elem );
+        static Node<valType>* subtreeMin( Node<valType> *sub );
 
         void displayTree( );
 
@@ -110,121 +114,49 @@ void BinaryTree<valType>::insert( const valType &elem )
 }
 
 template < typename valType >
-bool BinaryTree<valType>::remove( const valType &elem )
+void BinaryTree<valType>::remove( const valType &elem )
 {
-    /* return value:
-     * 1: empty tree or the elem is not in the tree
-     * 0: elem is in the tree and has been removed gracefully
-     */
-    if ( !_root )
-        // empty tree
-        return false;
+    if ( !_root ) return;
+    _root = Node<valType>::removeElem( elem, _root );
+}
+
+template < typename valType >
+Node<valType>* Node<valType>::removeElem( const valType &elem, Node<valType> * sub )
+{
+    if ( !sub ) return sub; // empty tree, do nothing
+
+    if ( sub->_val > elem )
+        sub->_left  = Node<valType>::removeElem( elem, sub->_left );
+    else if ( sub->_val < elem )
+        sub->_right = Node<valType>::removeElem( elem, sub->_right );
     else
     {
-        Node<valType> *ptr = _root;
-        Node<valType> *parent = _root;
-        while ( ptr )
+        if ( sub->_right )
         {
-            if ( ptr->_val > elem )
-            {   // _val > elem, find elem in left subtree
-                if ( !(ptr->_left) )
-                    return true;
-                else
-                {
-                    if ( ptr == _root )
-                        ptr = ptr->_left;
-                    else
-                    {
-                        parent = ptr;
-                        ptr = ptr->_left;
-                    }
-                }
-            }
-            else if ( ptr->_val < elem )
-            {   // _val < elem, find elem in right subtree
-                if ( !(ptr->_right) )
-                    return true;
-                else
-                {
-                    if ( ptr == _root )
-                      ptr = ptr->_right;
-                    else
-                    {
-                      parent = ptr;
-                      ptr = ptr->_right;
-                    }
-                }
-
-            }
-            else
-              break;
-        } // end of while
-
-        /* Now, we have found the target node and its parent.
-         * To remove it, we substitute the tartget node
-         * with the smallest value in the right subtree.
-         */
-
-        if ( ptr == parent )
-        {   // ptr = parent = root, i.e. to remove root node
-            if ( !(ptr->_right) )
-            {
-                _root = ptr->_left;
-                delete ptr;
-            }
-            else
-            {
-                Node<valType> *ptr2 = ptr->_right;
-                Node<valType> *parent2 = ptr->_right;
-                while ( ptr2->_left )
-                {
-                    if ( ptr2 == ptr->_right )
-                        ptr2 = ptr2->_left;
-                    else
-                    {
-                        parent2 = ptr2;
-                        ptr2 = ptr2->_left;
-                    }
-                }
-                ptr->_val = ptr2->_val;
-                ptr->_cnt = ptr2->_cnt;
-                parent2->_left = 0;
-                delete ptr2;
-            }
+            Node<valType> *minRHS = BinaryTree<valType>::subtreeMin( sub->_right );
+            sub->_val = minRHS->_val;
+            sub->_cnt = minRHS->_cnt;
+            sub->_right = Node<valType>::removeElem( minRHS->_val, sub->_right );
         }
         else
         {
-            if ( !(ptr->_right) )
+            if ( sub->_left )
             {
-                if ( parent->_left == ptr )
-                    parent->_left = ptr->_left;
-                else
-                    parent->_right = ptr->_left;
-                delete ptr;
+                Node<valType> *ptr = sub->_left;
+                delete sub;
+                return ptr;
             }
             else
             {
-                Node<valType> *ptr2 = ptr->_right;
-                Node<valType> *parent2 = ptr->_right;
-                while ( ptr2->_left )
-                {
-                    if ( ptr2 == ptr->_right )
-                        ptr2 = ptr2->_left;
-                    else
-                    {
-                        parent2 = ptr2;
-                        ptr2 = ptr2->_left;
-                    }
-                }
-                ptr->_val = ptr2->_val;
-                ptr->_cnt = ptr2->_cnt;
-                parent2->_left = 0;
-                delete ptr2;
+                delete sub;
+                return 0;
             }
-        } // endif
-        return true;
+        }
     }
+    return sub;
 }
+
+
 
 template < typename valType >
 bool BinaryTree<valType>::search( const valType &elem )
@@ -257,6 +189,17 @@ bool BinaryTree<valType>::search( const valType &elem )
 }
 
 template < typename valType >
+Node<valType>* BinaryTree<valType>::subtreeMin( Node<valType> *sub )
+{
+    if ( !sub ) throw new out_of_range("The subtree is empty!!");
+
+    Node<valType> *ptr = sub;
+    while ( ptr->_left )
+        ptr = ptr->_left;
+    return ptr;
+}
+
+template < typename valType >
 void BinaryTree<valType>::displayTree( )
 {
     if ( !_root )
@@ -282,8 +225,10 @@ int main()
     outFile << bt.root();
     outFile.close();
 
-    bt.remove(9);
-    bt.remove(12);
+    bt.remove(45);
+    bt.insert(45);
+    bt.remove(45);
+    bt.insert(45);
 
     bt.displayTree();
 
